@@ -41,8 +41,11 @@ static bool is_pow(int);
 static bool is_pow(TiXmlElement*);
 static bool is_prod(int);
 static bool is_prod(TiXmlElement*);
+static bool is_seq(int);
+static bool is_seq_of(int t1, int t2);
 static bool is_bool(int);
 static bool is_integer(int);
+static bool is_integer(TiXmlElement*);
 static bool is_real(int);
 static bool is_float(int);
 static bool are_equal(TiXmlElement* elem1, TiXmlElement* elem2);
@@ -55,6 +58,8 @@ static map<int, bool> powerset; // caches test if type is a POW
 static map<int, int> powerset_of;  // caches test if second is POW(first)
 static map<int, bool> product; // caches test if type is a *
 static map<pair<int, int>, int> product_of;  // caches test if second is first.first*first.second
+static map<int, bool> sequence; // caches test if type is a POW(INTEGER * ...)
+static map<int, int> sequence_of;  // caches test if second is POW(INTEGER * first)
 static map<int, TiXmlElement*> typeinfos;
 
 void help()
@@ -490,6 +495,35 @@ bool tc(TiXmlElement* elem) {
                 }
             }
             else if(strcmp(op, "[") == 0) {
+                if (!is_seq(tthis)) {
+                  cerr << elem->Row() << "," << elem->Column() << ":"
+                       << "Type of sequence in extension is not a sequence.\n";
+                  result = false;
+                }
+                else {
+                    for(TiXmlElement* child = elem->FirstChildElement();
+                        child != NULL;
+                        child = child->NextSiblingElement()) {
+                        if(strcmp(child->Value(), "Attr") == 0)
+                            continue;
+                        int targ;
+                        int qarg = child->QueryIntAttribute("typref", &targ);
+                        if (qarg == TIXML_SUCCESS) {
+                          if (!is_seq_of(targ, tthis)) {
+                            cerr << elem->Row() << "," << elem->Column() << ":"
+                                 << "Type of " << op << " expression "
+                                 << "is not a sequence of its argument type.\n";
+                            result = false;
+                          }
+                        } else {
+                          cerr << elem->Row() << "," << elem->Column() << ":"
+                               << "Missing type for element in sequence in "
+                                  "extension.\n";
+                          result = false;
+                        }
+                    }
+
+                }
             }
             else {
             }
@@ -525,6 +559,17 @@ bool tc(TiXmlElement* elem) {
                     cerr << elem->Row() << "," << elem->Column() << ":"
                          << "Type of " << op << " expression "
                          << "is not the set of its argument type.\n";
+                }
+            }
+            else if(strcmp(op, "card") == 0) {
+                if(!is_pow(targ)) {
+                    cerr << elem->Row() << "," << elem->Column() << ":"
+                         << "Type of argument is not a set for "
+                         << op << " expression.\n";
+                }
+                if(!is_integer(qthis)) {
+                    cerr << elem->Row() << "," << elem->Column() << ":"
+                         << "Type of argument is not INTEGER.\n";
                 }
             }
         } else if(qthis != TIXML_SUCCESS) {
@@ -572,7 +617,33 @@ static bool is_pow(TiXmlElement* e) {
         strcmp(e->Attribute("op"), "POW") == 0;
 }
 
-// tests if t is a powerset
+// tests if t is a sequence POW(INTEGER * ...)
+static bool is_seq(int t) {
+    map<int, bool>::iterator it = sequence.find(t);
+    if(it == sequence.end()) {
+        map<int, TiXmlElement*>::iterator it2 = typeinfos.find(t);
+        if(it2 == typeinfos.end()) {
+            cerr << "No type definition for typref " << t << ".\n";
+            return false;
+        }
+        else {
+            TiXmlElement* type = it2->second;
+            bool result;
+            result = type != nullptr &&
+                strcmp(type->Value(), "Unary_Exp") == 0 &&
+                strcmp(type->Attribute("op"), "POW") == 0 &&
+                type->FirstChildElement() != nullptr &&
+                is_prod(type->FirstChildElement()) &&
+                is_integer(type->FirstChildElement()->FirstChildElement()) ;
+            sequence.emplace(make_pair(t, result));
+            return result;
+        }
+    }
+    else {
+        return it->second;
+    }
+}
+
 static bool is_prod(int t) {
     map<int, bool>::iterator it = product.find(t);
     if(it == product.end()) {
@@ -636,6 +707,13 @@ static bool is_bool(int t) {
 // tests if t is INTEGER
 static bool is_integer(int t) {
     return is_predefined(t, id_integer, "INTEGER");
+}
+
+static bool is_integer(TiXmlElement *e)
+{
+    return e != nullptr &&
+       strcmp(e->Value(), "Id") == 0 &&
+       strcmp(e->Attribute("value"), "INTEGER") == 0;
 }
 
 // tests if t is REAL
@@ -758,6 +836,35 @@ static bool is_pow_of_pow_of_prod_of(int t1, int t2, int t3) {
         return false;
     return are_equal(typeinfos.at(t1)->FirstChildElement(), e6) &&
         are_equal(typeinfos.at(t2)->FirstChildElement(), e7);
+}
+
+// tests if t2 is type for the sequences of t1: t2 = POW(INTEGER * t2)
+static bool is_seq_of(int t1, int t2) {
+    if(!is_seq(t2))
+        return false;
+    map<int, int>::iterator it1 = sequence_of.find(t1);
+    if(it1 == sequence_of.end()) {
+        map<int, TiXmlElement*>::iterator it2 = typeinfos.find(t1);
+        if(it2 == typeinfos.end()) {
+            cerr << "No type definition for typref " << t1 << ".\n";
+            return false;
+        }
+        TiXmlElement* elem1;
+        TiXmlElement* elem2;
+        if(!get_type_elem(t1, elem1) || !get_type_elem(t2, elem2))
+            return false;
+        if(elem1 != nullptr && elem2 != nullptr &&
+           are_equal(elem1, elem2->FirstChildElement()->FirstChildElement()->NextSiblingElement())) {
+            sequence_of.insert(make_pair(t1, t2));
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return t2 == it1->second;
+    }
 }
 
 static bool are_equal(TiXmlElement* elem1, TiXmlElement* elem2) {

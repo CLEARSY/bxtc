@@ -35,24 +35,28 @@ A type checker for XML files generated in Atelier B.
 ### 4.6 Numeric comparison predicates
 
 (i) Both operands are typed and have the same type
+
 * lower than or equal to [X]
 * strictly lower than [X]
 * greater than or equal to [X]
 * strictly greater than [X]
 
 (i) + The first operand is typed INTEGER
+
 * lower than or equal to [X]
 * strictly lower than [X]
 * greater than or equal to [X]
 * strictly greater than [X]
 
 (i) + The first operand is typed REAL
+
 * lower than or equal to [X]
 * strictly lower than [X]
 * greater than or equal to [X]
 * strictly greater than [X]
 
 (i) + The first operand is typed FLOAT.
+
 * lower than or equal to [X]
 * strictly lower than [X]
 * greater than or equal to [X]
@@ -67,6 +71,7 @@ All expessions shall be typed.
 ### 5.2 Boolean expressions
 
 The type is BOOL
+
 * Literal TRUE [X]
 * Literal FALSE [X]
 * Conversion of a predicate to a Boolean expression [X]
@@ -81,19 +86,17 @@ The type is BOOL
 * Produit entier [X]
 * Division entière [X]
 * Modulo entier [X]
-* Puissance
+* Puissance [X]
 * Successeur
 * Prédécesseur
 * Partie entière
 * Partie entière par excès
 * Conversion de INTEGER dans REAL
 
-* Addition réelle
-* Différence réelle
-* Produit réel
-* Division réelle
-* Puissance réelle
-
+* Addition réelle [X]
+* Différence réelle [X]
+* Produit réel [X]
+* Division réelle [X]
 
 ### 5.4 Expressions arithmétiques (suite)
 
@@ -104,6 +107,7 @@ The type is BOOL
 ### 5.6 Predefined sets
 
 Le type est un type ensemble.
+
 * Ensemble vide [X]
 * Ensemble des entiers relatifs
 * Ensemble des entiers (naturels)
@@ -122,9 +126,11 @@ Le type est un type ensemble.
 Les types des arguments sont des ensembles. (i)
 
 (i) + Le type de l'expression est le produit cartésien du type des arguments
+
 * Produit cartésien [X]
 
 (i) + Le type de l'expression est l'ensemble des parties du type des arguments
+
 * Ensemble des parties [X]
 * Ensemble des parties non vides [X]
 * Ensemble des parties finies [X]
@@ -139,6 +145,7 @@ Les types des arguments sont des ensembles. (i)
 Les types des arguments sont des ensembles. (i)
 
 (i) + Les arguments ont le même type que le résultat
+
 * Différence [X]
 * Union [X]
 * Intersection [X]
@@ -154,9 +161,34 @@ Les types des arguments sont des ensembles. (i)
 * Record en extension
 * Accès à un champ de record
 
-
-### 5.10 Set of relations
+### 5.10 Sets of relations
 
 * Ensemble des relations [X]
+
+### 5.11 Expressions of relations
+
+### 5.12 Expressions of relations (continued)
+
+### 5.13 Expressions of relations (continued)
+
+### 5.14 Expressions of relations (continued)
+
+### 5.15 Sets of functions
+
+### 5.16 Expressions of functions
+
+### 5.17 Sets of sequences
+
+* Séquences
+* Séquences non vides seq1
+* Séquences injectives
+* Séquences injectives non vides
+* Permutations
+* Séquence vide [X]
+* Séquence en extension [X]
+
+### 5.18 Sequence Expressions
+
+### 5.18 Sequence Expressions (continued)
 
 ## 6 Substitutions
